@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Octopus — Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN SYSTEM — OBSIDIAN COMMAND CENTER
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --bg-void:      #06070a;
+  --bg-surface:   #0d0f14;
+  --bg-raised:    #141720;
+  --bg-overlay:   #1b1f2b;
+  --bg-hover:     #20253380;
+
+  --amber:        #f5a623;
+  --amber-dim:    #f5a62344;
+  --amber-glow:   #f5a62318;
+  --cyan:         #00d4ff;
+  --cyan-dim:     #00d4ff30;
+  --green:        #00e57a;
+  --green-dim:    #00e57a25;
+  --red:          #ff4757;
+  --red-dim:      #ff475720;
+
+  --text-primary:   #e8eaf0;
+  --text-secondary: #6b7280;
+  --text-muted:     #3a3f50;
+
+  --border:       #1e2330;
+  --border-glow:  #f5a62340;
+
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+
+  --radius:       6px;
+  --sidebar-w:    220px;
+  --transition:   180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── Noise overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+#app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
+  gap: 0;
+}
+
+/* ── Top bar ── */
+#topbar {
+  grid-column: 1 / -1;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  position: relative;
+}
+
+#topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  width: 28px; height: 28px;
+  position: relative;
+}
+
+.logo-mark svg { width: 100%; height: 100%; }
+
+.logo-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.logo-name span { color: var(--amber); }
+
+.topbar-divider {
+  width: 1px; height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.topbar-model {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-model .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.topbar-spacer { flex: 1; }
+
+.topbar-pending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--amber-glow);
+  border: 1px solid var(--amber-dim);
+  border-radius: var(--radius);
+  font-size: 11px;
+  color: var(--amber);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.topbar-pending:hover { background: var(--amber-dim); }
+.topbar-pending .badge {
+  background: var(--amber);
+  color: var(--bg-void);
+  font-weight: 700;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  min-width: 18px;
+  text-align: center;
+}
+#topbar-pending-count[data-count="0"] { display: none; }
+
+/* ── Sidebar ── */
+#sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 0;
+}
+
+.nav-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 16px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: all var(--transition);
+  position: relative;
+  border-left: 2px solid transparent;
+  user-select: none;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.nav-item.active {
+  color: var(--amber);
+  border-left-color: var(--amber);
+  background: var(--amber-glow);
+}
+
+.nav-item .icon {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.nav-item.active .icon { opacity: 1; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--amber);
+  color: var(--bg-void);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Arms status grid */
+.arms-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.arm-dot {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  position: relative;
+  cursor: default;
+  transition: all var(--transition);
+}
+
+.arm-dot::after {
+  content: attr(data-n);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.arm-dot.active  { border-color: var(--green-dim);  background: var(--green-dim); }
+.arm-dot.active::after  { color: var(--green); }
+.arm-dot.warning { border-color: var(--amber-dim); background: var(--amber-glow); }
+.arm-dot.warning::after { color: var(--amber); }
+
+/* ── Main content ── */
+#main {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-void);
+}
+
+.view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  animation: fadeIn 200ms ease;
+}
+.view.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.view-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.view-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.view-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.view-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMPONENTS
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Card ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-raised);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body { padding: 16px; }
+
+/* ── Stat card ── */
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.stat-card.amber::before { background: var(--amber); }
+.stat-card.cyan::before  { background: var(--cyan); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.red::before   { background: var(--red); }
+
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.stat-card.amber .stat-value { color: var(--amber); }
+.stat-card.cyan  .stat-value { color: var(--cyan); }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.red   .stat-value { color: var(--red); }
+
+.stat-sub { font-size: 11px; color: var(--text-muted); }
+
+/* ── Button ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--amber);
+  color: var(--bg-void);
+  border-color: var(--amber);
+}
+.btn-primary:hover { background: #fbb340; box-shadow: 0 0 12px var(--amber-dim); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); background: var(--bg-raised); }
+
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border-color: #ff47572a;
+}
+.btn-danger:hover { background: #ff47573a; box-shadow: 0 0 10px #ff47732a; }
+
+.btn-success {
+  background: var(--green-dim);
+  color: var(--green);
+  border-color: #00e57a2a;
+}
+.btn-success:hover { background: #00e57a3a; box-shadow: 0 0 10px #00e57a20; }
+
+.btn-sm { padding: 4px 10px; font-size: 10px; }
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-amber  { background: var(--amber-glow); color: var(--amber); border: 1px solid var(--amber-dim); }
+.badge-cyan   { background: var(--cyan-dim);   color: var(--cyan);  border: 1px solid #00d4ff30; }
+.badge-green  { background: var(--green-dim);  color: var(--green); border: 1px solid #00e57a25; }
+.badge-red    { background: var(--red-dim);    color: var(--red);   border: 1px solid #ff475720; }
+.badge-muted  { background: var(--bg-raised);  color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ── Input ── */
+.input {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--transition);
+}
+
+.input:focus { border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber-glow); }
+.input::placeholder { color: var(--text-muted); }
+
+textarea.input {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+
+/* ── Loading ── */
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Empty state ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty-icon { font-size: 32px; opacity: 0.3; }
+.empty-text { font-size: 12px; }
+
+/* ── Toast ── */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: all;
+  max-width: 320px;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.toast-success { background: var(--green-dim); border: 1px solid #00e57a40; color: var(--green); }
+.toast-error   { background: var(--red-dim);   border: 1px solid #ff475740; color: var(--red); }
+.toast-info    { background: var(--amber-glow); border: 1px solid var(--amber-dim); color: var(--amber); }
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD VIEW
+   ═══════════════════════════════════════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.arm-table { width: 100%; border-collapse: collapse; }
+.arm-table td { padding: 7px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.arm-table tr:last-child td { border-bottom: none; }
+.arm-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--amber);
+  width: 30px;
+  font-size: 11px;
+}
+.arm-name { color: var(--text-primary); flex: 1; }
+.arm-provider { color: var(--text-muted); font-size: 11px; padding: 0 8px; }
+
+/* ═══════════════════════════════════════════════════════════
+   REVIEW VIEW
+   ═══════════════════════════════════════════════════════════ */
+.workflow-block {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+  animation: fadeIn 250ms ease;
+}
+
+.workflow-header {
+  background: var(--bg-raised);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.workflow-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--amber);
+}
+
+.workflow-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.workflow-trigger {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workflow-actions-list {
+  padding: 0;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 36px 120px 1fr auto;
+  align-items: start;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.action-row:last-of-type { border-bottom: none; }
+
+.action-icon {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.action-type { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px; }
+
+.action-detail { display: flex; flex-direction: column; gap: 4px; }
+.action-to { font-weight: 700; color: var(--text-primary); }
+.action-subject { font-size: 11px; color: var(--text-secondary); }
+.action-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  line-height: 1.6;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre-wrap;
+}
+
+.workflow-footer {
+  padding: 12px 18px;
+  display: flex;
+  gap: 8px;
+  background: var(--bg-void);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Edit modal ── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: #00000090;
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 150ms ease;
+}
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 560px;
+  max-width: 95vw;
+  overflow: hidden;
+  box-shadow: 0 24px 48px #00000060;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-raised);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+.form-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 4px; }
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT VIEW
+   ═══════════════════════════════════════════════════════════ */
+#chat-view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+}
+#chat-view.active { display: flex; }
+
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fadeIn 200ms ease;
+}
+
+.msg-role {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.msg.user .msg-role   { color: var(--amber); }
+.msg.assistant .msg-role { color: var(--cyan); }
+
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 6px;
+  line-height: 1.7;
+  font-size: 13px;
+  max-width: 720px;
+  white-space: pre-wrap;
+}
+
+.msg.user .msg-bubble {
+  background: var(--amber-glow);
+  border: 1px solid var(--amber-dim);
+  color: var(--text-primary);
+  align-self: flex-end;
+}
+
+.msg.assistant .msg-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  align-self: flex-start;
+}
+
+.chat-input-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+#chat-input {
+  flex: 1;
+  resize: none;
+  min-height: 42px;
+  max-height: 140px;
+}
+
+.chat-send-btn {
+  flex-shrink: 0;
+  height: 42px;
+  width: 42px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 8px 0;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WORKFLOWS VIEW
+   ═══════════════════════════════════════════════════════════ */
+.workflow-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.wf-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.wf-card:hover {
+  border-color: var(--amber-dim);
+  box-shadow: 0 0 24px var(--amber-glow);
+}
+
+.wf-card-header {
+  padding: 14px 16px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wf-card-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wf-card-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wf-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+
+.wf-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.keyword {
+  padding: 2px 7px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.wf-card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+/* Run modal */
+.run-modal-body { display: flex; flex-direction: column; gap: 14px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MEMORY VIEW
+   ═══════════════════════════════════════════════════════════ */
+.memory-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.memory-result {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  animation: fadeIn 200ms ease;
+}
+
+.memory-entity {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--amber);
+  white-space: nowrap;
+  width: 100px;
+  flex-shrink: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.memory-content { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.memory-date { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════
+   CONFIG VIEW
+   ═══════════════════════════════════════════════════════════ */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+}
+
+.config-section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-table { width: 100%; border-collapse: collapse; }
+.config-table tr { border-bottom: 1px solid var(--border); }
+.config-table tr:last-child { border-bottom: none; }
+.config-table td { padding: 8px 0; vertical-align: top; }
+.config-key { color: var(--text-muted); width: 45%; font-size: 11px; }
+.config-val { color: var(--text-primary); font-size: 11px; word-break: break-all; }
+.config-val.secret { color: var(--text-muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="6" fill="#f5a623"/>
+          <!-- 8 arms -->
+          <line x1="14" y1="8"  x2="14" y2="2"  stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="10" x2="22" y2="5"  stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="20" y1="14" x2="26" y2="14" stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="18" x2="22" y2="23" stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="14" y1="20" x2="14" y2="26" stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="10" y1="18" x2="6"  y2="23" stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8"  y1="14" x2="2"  y2="14" stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+          <line x1="10" y1="10" x2="6"  y2="5"  stroke="#f5a62380" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="logo-name">octo<span>pus</span></div>
+    </div>
+
+    <div class="topbar-divider"></div>
+
+    <div class="topbar-model">
+      <div class="dot"></div>
+      <span id="topbar-model-name">claude-sonnet-4-6</span>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <div class="topbar-pending" id="topbar-pending-count" data-count="0" onclick="switchView('review')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Pending Review</span>
+      <div class="badge" id="topbar-badge">0</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="nav-section-label">Navigation</div>
+
+    <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </div>
+
+    <div class="nav-item" data-view="review" onclick="switchView('review')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      Review Queue
+      <div class="nav-badge" id="nav-badge" style="display:none">0</div>
+    </div>
+
+    <div class="nav-item" data-view="chat" onclick="switchView('chat')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+      Chat
+    </div>
+
+    <div class="nav-item" data-view="workflows" onclick="switchView('workflows')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
+      Workflows
+    </div>
+
+    <div class="nav-item" data-view="memory" onclick="switchView('memory')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </svg>
+      Memory Bank
+    </div>
+
+    <div class="nav-item" data-view="config" onclick="switchView('config')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+      Config
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="stat-label" style="margin-bottom:8px">8 Arms</div>
+      <div class="arms-grid" id="arms-grid">
+        <div class="arm-dot" data-arm="1" data-n="1"></div>
+        <div class="arm-dot" data-arm="2" data-n="2"></div>
+        <div class="arm-dot" data-arm="3" data-n="3"></div>
+        <div class="arm-dot" data-arm="4" data-n="4"></div>
+        <div class="arm-dot" data-arm="5" data-n="5"></div>
+        <div class="arm-dot" data-arm="6" data-n="6"></div>
+        <div class="arm-dot" data-arm="7" data-n="7"></div>
+        <div class="arm-dot" data-arm="8" data-n="8"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="view-header">
+        <div>
+          <div class="view-subtitle">Overview</div>
+          <div class="view-title">Command Center</div>
+        </div>
+        <div style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="refreshAll()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="view-body">
+
+        <div class="stats-row" id="stats-row">
+          <div class="stat-card amber">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value" id="stat-pending">—</div>
+            <div class="stat-sub">actions staged</div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-label">LLM Model</div>
+            <div class="stat-value" style="font-size:16px;margin-top:4px" id="stat-model">—</div>
+            <div class="stat-sub">active</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Workflows</div>
+            <div class="stat-value" id="stat-workflows">—</div>
+            <div class="stat-sub">available</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Arms Online</div>
+            <div class="stat-value" id="stat-arms">—</div>
+            <div class="stat-sub">/ 8 connected</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                The 8 Arms
+              </div>
+            </div>
+            <div class="card-body" style="padding:0">
+              <table class="arm-table">
+                <tbody id="arm-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Active Workflows
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="switchView('workflows')">View all</button>
+            </div>
+            <div class="card-body" style="padding:0" id="dash-workflows"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── REVIEW QUEUE ── -->
+    <div class="view" id="view-review">
+      <div class="view-header">
+        <div>
+          <div class="view-subtitle">Sandbox Queue</div>
+          <div class="view-title">Review Actions</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="loadReviewQueue()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="view-body" id="review-body">
+        <div class="empty"><div class="empty-icon">🛡</div><div class="empty-text">Loading queue…</div></div>
+      </div>
+    </div>
+
+    <!-- ── CHAT ── -->
+    <div class="view" id="view-chat">
+      <div class="view-header" style="padding-bottom:12px">
+        <div>
+          <div class="view-subtitle">Interactive</div>
+          <div class="view-title">Chat</div>
+        </div>
+        <div style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="clearChat()">Clear</button>
+        </div>
+      </div>
+
+      <div id="chat-messages">
+        <div class="msg assistant">
+          <div class="msg-role">Octopus</div>
+          <div class="msg-bubble">Hello. I'm your 8-armed AI assistant. I can help you manage emails, schedule meetings, create tasks, search your memory, and trigger workflows. What do you need?</div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <textarea class="input" id="chat-input" placeholder="Ask Octopus anything…" rows="1" onkeydown="chatKeydown(event)"></textarea>
+          <button class="btn btn-primary chat-send-btn" onclick="sendChat()" title="Send (Enter)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WORKFLOWS ── -->
+    <div class="view" id="view-workflows">
+      <div class="view-header">
+        <div>
+          <div class="view-subtitle">Automation</div>
+          <div class="view-title">Workflows</div>
+        </div>
+      </div>
+      <div class="view-body">
+        <div class="workflow-cards" id="workflow-cards">
+          <div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">Loading workflows…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MEMORY ── -->
+    <div class="view" id="view-memory">
+      <div class="view-header">
+        <div>
+          <div class="view-subtitle">Arm 7 — Vector Database</div>
+          <div class="view-title">Memory Bank</div>
+        </div>
+      </div>
+      <div class="view-body">
+        <div class="memory-search">
+          <input class="input" id="memory-query" placeholder="Search memories…" onkeydown="if(event.key==='Enter') searchMemory()">
+          <input class="input" id="memory-entity" placeholder="Filter by entity (optional)" style="max-width:200px">
+          <button class="btn btn-primary" onclick="searchMemory()">Search</button>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-ghost btn-sm" onclick="showStoreMemoryModal()">
+            + Store Memory
+          </button>
+        </div>
+
+        <div id="memory-results">
+          <div class="empty">
+            <div class="empty-icon">🧠</div>
+            <div class="empty-text">Enter a query to search the memory bank</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONFIG ── -->
+    <div class="view" id="view-config">
+      <div class="view-header">
+        <div>
+          <div class="view-subtitle">Settings</div>
+          <div class="view-title">Configuration</div>
+        </div>
+      </div>
+      <div class="view-body">
+        <div class="config-grid" id="config-grid">
+          <div class="empty"><div class="empty-icon">⚙</div><div class="empty-text">Loading config…</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Run Workflow Modal -->
+<div id="run-modal" style="display:none">
+  <div class="modal-backdrop" onclick="if(event.target===this)closeRunModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">▶ Trigger Workflow</div>
+        <button class="modal-close" onclick="closeRunModal()">✕</button>
+      </div>
+      <div class="modal-body run-modal-body">
+        <input type="hidden" id="run-wf-name">
+        <div>
+          <div class="form-label">Sender Email</div>
+          <input class="input" id="run-sender" value="manual@octopus.local" placeholder="sender@example.com">
+        </div>
+        <div>
+          <div class="form-label">Email Subject</div>
+          <input class="input" id="run-subject" placeholder="e.g. Quick call this Thursday?">
+        </div>
+        <div>
+          <div class="form-label">Email Body</div>
+          <textarea class="input" id="run-body" placeholder="Paste or type the email body…" rows="4"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeRunModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="executeRunWorkflow()">Run Workflow</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Action Modal -->
+<div id="edit-modal" style="display:none">
+  <div class="modal-backdrop" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">✏ Edit Action</div>
+        <button class="modal-close" onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-action-id">
+        <div>
+          <div class="form-label">To</div>
+          <input class="input" id="edit-to">
+        </div>
+        <div>
+          <div class="form-label">Subject</div>
+          <input class="input" id="edit-subject">
+        </div>
+        <div>
+          <div class="form-label">Body</div>
+          <textarea class="input" id="edit-body" rows="8"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Store Memory Modal -->
+<div id="store-memory-modal" style="display:none">
+  <div class="modal-backdrop" onclick="if(event.target===this)closeStoreMemoryModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🧠 Store Memory</div>
+        <button class="modal-close" onclick="closeStoreMemoryModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="form-label">Entity (person/project)</div>
+          <input class="input" id="store-entity" placeholder="e.g. alex@designco.com">
+        </div>
+        <div>
+          <div class="form-label">Content</div>
+          <textarea class="input" id="store-content" rows="4" placeholder="What should Octopus remember?"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeStoreMemoryModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="storeMemory()">Store</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   APP STATE
+   ═══════════════════════════════════════════════════════════ */
+let currentView = 'dashboard';
+let statusData = null;
+let pendingCount = 0;
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelector(`.nav-item[data-view="${name}"]`)?.classList.add('active');
+
+  currentView = name;
+
+  if (name === 'review')    loadReviewQueue();
+  if (name === 'workflows') loadWorkflows();
+  if (name === 'config')    loadConfig();
+  if (name === 'dashboard') loadDashboard();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   API HELPERS
+   ═══════════════════════════════════════════════════════════ */
+async function api(path, opts = {}) {
+  try {
+    const res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || res.statusText);
+    }
+    return res.json();
+  } catch (e) {
+    toast(e.message || 'Request failed', 'error');
+    throw e;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════ */
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  const icons = { success: '✓', error: '✕', info: '◆' };
+  el.innerHTML = `<span>${icons[type]||'◆'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  const [status, workflows] = await Promise.all([
+    api('/api/status').catch(() => null),
+    api('/api/workflows').catch(() => []),
+  ]);
+
+  if (status) {
+    statusData = status;
+    pendingCount = status.pending_actions || 0;
+    updatePendingBadge(pendingCount);
+
+    document.getElementById('stat-pending').textContent = pendingCount;
+    document.getElementById('stat-model').textContent = status.llm_model?.replace('claude-','').replace('-',' ') || '—';
+    document.getElementById('stat-arms').textContent = status.arms?.filter(a => a.status === 'active').length || '—';
+
+    // Arm table
+    const tbody = document.getElementById('arm-table-body');
+    tbody.innerHTML = status.arms.map(a => `
+      <tr>
+        <td class="arm-num" style="padding-left:16px">${a.arm}</td>
+        <td class="arm-name" style="padding:8px 0">${a.name}</td>
+        <td class="arm-provider">${a.provider}</td>
+        <td style="padding-right:16px;padding:8px 16px 8px 0">
+          <span class="badge badge-${a.status === 'active' ? 'green' : a.status === 'configured' ? 'cyan' : 'amber'}">${a.status}</span>
+        </td>
+      </tr>
+    `).join('');
+
+    // Arms grid dots
+    document.querySelectorAll('.arm-dot').forEach(dot => {
+      const n = parseInt(dot.dataset.arm);
+      const arm = status.arms.find(a => a.arm === n);
+      if (arm) {
+        dot.className = 'arm-dot ' + (arm.status === 'active' ? 'active' : arm.status === 'configured' ? 'active' : 'warning');
+        dot.title = `Arm ${n}: ${arm.name} (${arm.status})`;
+      }
+    });
+  }
+
+  document.getElementById('stat-workflows').textContent = workflows.length || '—';
+
+  // Workflow quick list
+  const dashWf = document.getElementById('dash-workflows');
+  if (!workflows.length) {
+    dashWf.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-text">No workflows found</div></div>';
+  } else {
+    dashWf.innerHTML = workflows.map(wf => `
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+        <span class="badge badge-${wf.mode === 'dynamic' ? 'cyan' : 'muted'}">${wf.mode}</span>
+        <span style="font-family:var(--font-display);font-weight:600;font-size:12px">${wf.name.replace(/_/g,' ')}</span>
+        <span style="margin-left:auto">
+          <button class="btn btn-ghost btn-sm" onclick="openRunModal('${wf.name}')">▶ Run</button>
+        </span>
+      </div>
+    `).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REVIEW QUEUE
+   ═══════════════════════════════════════════════════════════ */
+async function loadReviewQueue() {
+  const body = document.getElementById('review-body');
+  body.innerHTML = '<div class="empty"><div class="spinner"></div><div class="empty-text" style="margin-top:8px">Loading queue…</div></div>';
+
+  const queue = await api('/api/sandbox/pending').catch(() => []);
+  pendingCount = queue.length;
+  updatePendingBadge(pendingCount);
+
+  if (!queue.length) {
+    body.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🛡</div>
+        <div class="empty-text">No pending actions. Octopus is watching your inbox.</div>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = queue.map(wf => renderWorkflowBlock(wf)).join('');
+}
+
+function renderWorkflowBlock(wf) {
+  const actions = wf.actions.map(a => renderActionRow(a)).join('');
+  const time = new Date(wf.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  return `
+    <div class="workflow-block">
+      <div class="workflow-header">
+        <span class="badge badge-amber">Workflow</span>
+        <span class="workflow-name">${wf.workflow_name.replace(/_/g,' ')}</span>
+        <div class="workflow-trigger">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          ${wf.triggered_by}
+          <span style="color:var(--text-muted)">· ${time}</span>
+        </div>
+      </div>
+      <div class="workflow-actions-list">${actions}</div>
+      <div class="workflow-footer">
+        <button class="btn btn-success" onclick="approveWorkflow('${wf.workflow_id}', this)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Approve & Execute
+        </button>
+        <button class="btn btn-danger" onclick="rejectWorkflow('${wf.workflow_id}', this)">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reject
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderActionRow(action) {
+  const icons = {
+    send_email: '✉',
+    reply_email: '↩',
+    create_calendar_event: '📅',
+    hold_calendar_slots: '🔒',
+    create_task: '✅',
+    update_task: '✏',
+    send_notification: '🔔',
+  };
+  const p = action.payload;
+  const icon = icons[action.action_type] || '◆';
+  const label = action.action_type.replace(/_/g,' ');
+
+  let detail = '';
+  if (p.to) {
+    detail = `
+      <div class="action-to">${p.to}</div>
+      ${p.subject ? `<div class="action-subject">${p.subject}</div>` : ''}
+      ${p.body ? `<div class="action-preview">${p.body.substring(0, 200)}</div>` : ''}
+    `;
+  } else if (p.title) {
+    detail = `<div class="action-to">${p.title}</div>${p.project ? `<div class="action-subject">Project: ${p.project}</div>` : ''}`;
+  }
+
+  const editBtn = (p.body || p.to) ? `
+    <button class="btn btn-ghost btn-sm" onclick='openEditModal(${JSON.stringify(action)})'>Edit</button>
+  ` : '';
+
+  return `
+    <div class="action-row">
+      <div class="action-icon">${icon}</div>
+      <div class="action-type">${label}</div>
+      <div class="action-detail">${detail}</div>
+      <div>${editBtn}</div>
+    </div>
+  `;
+}
+
+async function approveWorkflow(wfId, btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Executing…';
+  try {
+    const res = await api(`/api/sandbox/approve/${wfId}`, { method: 'POST' });
+    if (res.errors?.length) {
+      toast(`Partial execution. Errors: ${res.errors.join('; ')}`, 'error');
+    } else {
+      toast('Workflow executed successfully', 'success');
+    }
+    await loadReviewQueue();
+  } catch(e) {}
+}
+
+async function rejectWorkflow(wfId, btn) {
+  btn.disabled = true;
+  try {
+    await api(`/api/sandbox/reject/${wfId}`, { method: 'POST' });
+    toast('Workflow rejected and cleared', 'info');
+    await loadReviewQueue();
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDIT MODAL
+   ═══════════════════════════════════════════════════════════ */
+function openEditModal(action) {
+  document.getElementById('edit-action-id').value = action.id;
+  document.getElementById('edit-to').value = action.payload.to || '';
+  document.getElementById('edit-subject').value = action.payload.subject || '';
+  document.getElementById('edit-body').value = action.payload.body || '';
+  document.getElementById('edit-modal').style.display = 'block';
+}
+function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+
+async function saveEdit() {
+  const id = document.getElementById('edit-action-id').value;
+  const body = {
+    to: document.getElementById('edit-to').value,
+    subject: document.getElementById('edit-subject').value,
+    body: document.getElementById('edit-body').value,
+  };
+  await api(`/api/sandbox/edit/${id}`, { method: 'POST', body: JSON.stringify(body) });
+  toast('Action updated', 'success');
+  closeEditModal();
+  loadReviewQueue();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT
+   ═══════════════════════════════════════════════════════════ */
+let chatBusy = false;
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+}
+
+async function sendChat() {
+  if (chatBusy) return;
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  appendMsg('user', msg);
+
+  const typingEl = appendTypingIndicator();
+  chatBusy = true;
+
+  try {
+    const res = await api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg }),
+    });
+    typingEl.remove();
+    appendMsg('assistant', res.response);
+  } catch(e) {
+    typingEl.remove();
+    appendMsg('assistant', '⚠ Error: ' + e.message);
+  } finally {
+    chatBusy = false;
+  }
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-role">${role === 'user' ? 'You' : 'Octopus'}</div>
+    <div class="msg-bubble">${escHtml(text)}</div>
+  `;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+function appendTypingIndicator() {
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'msg assistant';
+  el.innerHTML = `
+    <div class="msg-role">Octopus</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+async function clearChat() {
+  await api('/api/chat/clear', { method: 'POST' });
+  document.getElementById('chat-messages').innerHTML = `
+    <div class="msg assistant">
+      <div class="msg-role">Octopus</div>
+      <div class="msg-bubble">Chat cleared. How can I help you?</div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WORKFLOWS
+   ═══════════════════════════════════════════════════════════ */
+async function loadWorkflows() {
+  const container = document.getElementById('workflow-cards');
+  container.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  const wfs = await api('/api/workflows').catch(() => []);
+  if (!wfs.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">No workflows found</div></div>';
+    return;
+  }
+
+  container.innerHTML = wfs.map(wf => `
+    <div class="wf-card">
+      <div class="wf-card-header">
+        <div class="wf-card-name">
+          <span class="badge badge-${wf.mode === 'dynamic' ? 'cyan' : 'muted'}">${wf.mode}</span>
+          ${wf.name.replace(/_/g,' ')}
+        </div>
+        <div style="display:flex;gap:6px">
+          <span class="badge badge-${wf.trigger_type === 'email_keyword' ? 'amber' : 'muted'}">${wf.trigger_type}</span>
+        </div>
+      </div>
+      <div class="wf-card-body">
+        <div class="wf-desc">${wf.description || 'No description.'}</div>
+        ${wf.trigger_keywords?.length ? `
+          <div class="wf-keywords">
+            ${wf.trigger_keywords.slice(0,6).map(k => `<span class="keyword">${k}</span>`).join('')}
+            ${wf.trigger_keywords.length > 6 ? `<span class="keyword">+${wf.trigger_keywords.length - 6} more</span>` : ''}
+          </div>` : ''}
+      </div>
+      <div class="wf-card-footer">
+        <button class="btn btn-primary btn-sm" onclick="openRunModal('${wf.name}')">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openRunModal(name) {
+  document.getElementById('run-wf-name').value = name;
+  document.getElementById('run-modal').style.display = 'block';
+}
+function closeRunModal() { document.getElementById('run-modal').style.display = 'none'; }
+
+async function executeRunWorkflow() {
+  const name = document.getElementById('run-wf-name').value;
+  const body = {
+    workflow_name: name,
+    sender: document.getElementById('run-sender').value,
+    subject: document.getElementById('run-subject').value,
+    body: document.getElementById('run-body').value,
+  };
+  try {
+    const res = await api('/api/workflows/run', { method: 'POST', body: JSON.stringify(body) });
+    closeRunModal();
+    toast(`Workflow ${name} → ${res.status}. ${res.status === 'paused' ? 'Check Review Queue.' : ''}`, 'success');
+    updatePendingBadge(pendingCount + 1);
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MEMORY
+   ═══════════════════════════════════════════════════════════ */
+async function searchMemory() {
+  const q = document.getElementById('memory-query').value.trim();
+  const entity = document.getElementById('memory-entity').value.trim() || undefined;
+  if (!q) { toast('Enter a search query', 'error'); return; }
+
+  const container = document.getElementById('memory-results');
+  container.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  const url = `/api/memory/query?q=${encodeURIComponent(q)}${entity ? '&entity=' + encodeURIComponent(entity) : ''}`;
+  const results = await api(url).catch(() => []);
+
+  if (!results.length || results.error) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🧠</div><div class="empty-text">No memories found for this query</div></div>';
+    return;
+  }
+
+  container.innerHTML = results.map(e => `
+    <div class="memory-result">
+      <div class="memory-entity">${e.entity}</div>
+      <div class="memory-content">${escHtml(e.content)}</div>
+      <div class="memory-date">${new Date(e.created_at).toLocaleDateString()}</div>
+    </div>
+  `).join('');
+}
+
+function showStoreMemoryModal() { document.getElementById('store-memory-modal').style.display = 'block'; }
+function closeStoreMemoryModal() { document.getElementById('store-memory-modal').style.display = 'none'; }
+
+async function storeMemory() {
+  const entity = document.getElementById('store-entity').value.trim();
+  const content = document.getElementById('store-content').value.trim();
+  if (!entity || !content) { toast('Entity and content required', 'error'); return; }
+
+  await api('/api/memory/store', {
+    method: 'POST',
+    body: JSON.stringify({ entity, content }),
+  });
+  toast('Memory stored', 'success');
+  closeStoreMemoryModal();
+  document.getElementById('store-entity').value = '';
+  document.getElementById('store-content').value = '';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONFIG
+   ═══════════════════════════════════════════════════════════ */
+async function loadConfig() {
+  const grid = document.getElementById('config-grid');
+  grid.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  const cfg = await api('/api/config').catch(() => null);
+  if (!cfg) { grid.innerHTML = '<div class="empty"><div class="empty-text">Failed to load config</div></div>'; return; }
+
+  const sectionIcons = { llm:'🤖', email:'✉', calendar:'📅', tasks:'✅', memory:'🧠', notifications:'🔔', sandbox:'🛡', security:'🔒' };
+
+  grid.innerHTML = Object.entries(cfg).map(([section, values]) => `
+    <div class="card">
+      <div class="card-header">
+        <div class="config-section-title">
+          ${sectionIcons[section] || '⚙'} ${section}
+        </div>
+      </div>
+      <div class="card-body" style="padding:0 16px">
+        <table class="config-table">
+          ${Object.entries(values).map(([k, v]) => `
+            <tr>
+              <td class="config-key">${k}</td>
+              <td class="config-val ${v === '***' ? 'secret' : ''}">${v === '***' ? '••••••••' : Array.isArray(v) ? v.slice(0,3).join(', ') + (v.length > 3 ? '…' : '') : String(v)}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+function updatePendingBadge(n) {
+  pendingCount = n;
+  const el = document.getElementById('topbar-pending-count');
+  const badge = document.getElementById('topbar-badge');
+  const navBadge = document.getElementById('nav-badge');
+  el.dataset.count = n;
+  badge.textContent = n;
+  navBadge.textContent = n;
+  navBadge.style.display = n > 0 ? 'inline' : 'none';
+}
+
+function refreshAll() {
+  loadDashboard();
+  toast('Refreshed', 'info');
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto-resize chat textarea
+document.getElementById('chat-input')?.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+});
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════ */
+(async function init() {
+  await loadDashboard();
+  // Poll for pending count every 30s
+  setInterval(async () => {
+    const s = await api('/api/status').catch(() => null);
+    if (s) updatePendingBadge(s.pending_actions || 0);
+  }, 30000);
+})();
+</script>
+</body>
+</html>

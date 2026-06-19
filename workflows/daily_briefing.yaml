@@ -1,0 +1,20 @@
+name: daily_briefing
+description: >
+  Morning digest: summarizes unread emails, today's calendar, and open tasks.
+  Runs in dynamic mode — the LLM decides how to narrate the summary.
+
+trigger:
+  type: schedule
+  cron: "0 8 * * 1-5"   # 8 AM weekdays
+
+mode: dynamic
+
+goal: >
+  Produce a concise morning briefing for the user. Check their unread emails,
+  today's calendar events, and any high-priority tasks. Summarise everything
+  into a single clear digest and stage it as a notification.
+
+system_prompt: >
+  You are Octopus, a personal AI assistant. You have access to the user's
+  email, calendar, and task list. Produce a concise morning briefing.
+  Always call send_to_sandbox when done so the user sees the digest.

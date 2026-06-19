@@ -1,0 +1,53 @@
+name: meeting_scheduler
+description: >
+  Triggered when a client emails requesting a meeting. Fetches context about
+  the sender, proposes available slots, drafts a reply with the options, and
+  stages everything for user approval.
+
+trigger:
+  type: email_keyword
+  keywords:
+    - "quick call"
+    - "hop on a call"
+    - "schedule a meeting"
+    - "let's meet"
+    - "30 minutes"
+    - "15 minutes"
+    - "sync up"
+
+mode: deterministic
+
+steps:
+  - use_skill: fetch_memory_context
+    args:
+      entity: "{{trigger.sender}}"
+      query: "client priority relationship"
+
+  - use_skill: propose_slots
+    args:
+      date: "{{trigger.requested_date}}"
+      duration_minutes: 30
+      max_slots: 2
+      hold_tentative: true
+
+  - use_skill: stage_draft
+    args:
+      to: "{{trigger.sender}}"
+      subject: "Re: {{trigger.subject}}"
+      body: |
+        Hi {{trigger.sender_name}},
+
+        Happy to connect! I have the following times available:
+
+        • {{propose_slots.slots.0.start}} – {{propose_slots.slots.0.end}}
+        • {{propose_slots.slots.1.start}} – {{propose_slots.slots.1.end}}
+
+        Let me know which works best for you and I'll send a calendar invite.
+
+        Best,
+        [Your Name]
+
+  - use_skill: send_to_sandbox
+    args:
+      workflow_name: "Meeting Scheduler"
+      action_count: 3

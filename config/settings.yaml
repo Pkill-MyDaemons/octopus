@@ -1,0 +1,51 @@
+# Octopus Configuration
+# Copy this file to ~/.config/octopus/settings.yaml and fill in your values.
+
+llm:
+  provider: anthropic          # anthropic | groq | ollama | gemini | openai
+  model: claude-sonnet-4-6
+  max_tokens: 4096
+  # Provider-specific model defaults:
+  #   anthropic → claude-sonnet-4-6
+  #   groq      → llama-3.3-70b-versatile
+  #   ollama    → llama3.1
+  #   gemini    → gemini-2.0-flash
+  #   openai    → gpt-4o
+
+email:
+  provider: gmail              # gmail | imap
+  poll_interval_seconds: 300
+
+calendar:
+  provider: google_calendar
+  no_meetings_before: "09:00"
+  no_meetings_after: "18:00"
+  slot_duration_minutes: 30
+
+tasks:
+  provider: asana              # asana | markdown
+  markdown_path: ~/tasks.md
+  asana_workspace: ""          # fill in your Asana workspace GID
+
+memory:
+  provider: chromadb
+  persist_dir: ~/.config/octopus/memory
+
+notifications:
+  provider: system             # system | slack
+  slack_webhook: ""
+
+sandbox:
+  db_path: ~/.config/octopus/sandbox.db
+  auto_expire_hours: 24
+
+security:
+  max_prompt_length: 8192
+  injection_block_patterns:
+    - "ignore previous instructions"
+    - "ignore all prior"
+    - "disregard your"
+    - "you are now"
+    - "act as if"
+    - "pretend you are"
+  redact_pii: true

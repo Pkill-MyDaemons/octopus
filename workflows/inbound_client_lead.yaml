@@ -1,0 +1,43 @@
+name: inbound_client_lead
+description: >
+  Triggered when an inbound email contains pricing/consultation keywords.
+  Creates an Asana task in the Sales Pipeline, drafts an intro email, and
+  stages everything for approval.
+
+trigger:
+  type: email_keyword
+  keywords:
+    - "pricing"
+    - "quote"
+    - "consultation"
+    - "proposal"
+    - "how much"
+    - "cost"
+    - "rates"
+
+mode: deterministic
+
+steps:
+  - use_skill: fetch_memory_context
+    args:
+      entity: "{{trigger.sender}}"
+
+  - use_skill: sync_task
+    args:
+      title: "Follow up with {{trigger.sender_name}} ({{trigger.sender}})"
+      project: "Sales Pipeline"
+      priority: "High"
+      notes: "Inbound lead via email. Subject: {{trigger.subject}}"
+
+  - use_skill: draft_email_template
+    args:
+      template_id: intro_deck
+      to: "{{trigger.sender}}"
+      variables:
+        name: "{{trigger.sender_name}}"
+        subject: "{{trigger.subject}}"
+
+  - use_skill: send_to_sandbox
+    args:
+      workflow_name: "Inbound Client Lead"
+      action_count: 2
