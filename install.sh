@@ -111,10 +111,21 @@ EOF
   fi
   ok "Installed to $WRAPPER"
 else
-  warn "Cannot write to /usr/local/bin. Add this to your shell profile:"
-  echo ""
-  echo "    export PATH=\"$VENV/bin:\$PATH\""
-  echo ""
+  # Detect shell profile and inject PATH
+  if [ -n "${ZSH_VERSION:-}" ] || [ "$(basename "${SHELL:-}")" = "zsh" ]; then
+    PROFILE="$HOME/.zshrc"
+  elif [ -n "${BASH_VERSION:-}" ] || [ "$(basename "${SHELL:-}")" = "bash" ]; then
+    PROFILE="$HOME/.bashrc"
+  else
+    PROFILE="$HOME/.profile"
+  fi
+  PATH_LINE="export PATH=\"$VENV/bin:\$PATH\""
+  if grep -qF "$VENV/bin" "$PROFILE" 2>/dev/null; then
+    ok "PATH already set in $PROFILE"
+  else
+    printf '\n%s\n' "$PATH_LINE" >> "$PROFILE"
+    ok "Added octopus to PATH in $PROFILE — run: source $PROFILE"
+  fi
 fi
 
 # ── .env template ─────────────────────────────────────────────
