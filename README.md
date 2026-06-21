@@ -14,13 +14,13 @@ Octopus connects your email, calendar, tasks, memory, and notifications into a s
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/henrytunguz/octopus/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pkill-mydaemons/octopus/main/install.sh | bash
 ```
 
 Or clone and install manually:
 
 ```bash
-git clone https://github.com/henrytunguz/octopus
+git clone https://github.com/pkill-mydaemons/octopus
 cd octopus
 pip install -e .
 ```
