@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
 #  Octopus — standalone installer
-#  Usage: curl -fsSL https://raw.githubusercontent.com/henrytunguz/octopus/main/install.sh | bash
+#  Usage: curl -fsSL https://raw.githubusercontent.com/pkill-mydaemons/octopus/main/install.sh | bash
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
 
