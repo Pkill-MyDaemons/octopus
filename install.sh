@@ -65,7 +65,10 @@ if [ -d "$INSTALL_DIR/.git" ]; then
   ok "Updated"
 else
   step "Cloning Octopus to ${INSTALL_DIR}…"
-  git clone --quiet "$REPO" "$INSTALL_DIR"
+  git clone --depth=1 --no-checkout --quiet "$REPO" "$INSTALL_DIR"
+  git -C "$INSTALL_DIR" sparse-checkout init --cone --quiet
+  git -C "$INSTALL_DIR" sparse-checkout set octopus
+  git -C "$INSTALL_DIR" checkout --quiet
   ok "Cloned"
 fi
 
