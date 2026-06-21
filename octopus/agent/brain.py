@@ -178,8 +178,6 @@ class Brain:
             model=self._model,
             max_tokens=self._max_tokens,
             messages=messages_with_sys,
-            tools=self._openai_tools(),
-            tool_choice="auto",
         )
         msg = resp.choices[0].message
         return msg.content or ""
