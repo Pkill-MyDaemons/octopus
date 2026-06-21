@@ -60,11 +60,11 @@ ok "git found"
 
 # ── Clone or update ───────────────────────────────────────────
 if [ -d "$INSTALL_DIR/.git" ]; then
-  step "Updating existing installation at $INSTALL_DIR…"
+  step "Updating existing installation at ${INSTALL_DIR}…"
   git -C "$INSTALL_DIR" pull --quiet
   ok "Updated"
 else
-  step "Cloning Octopus to $INSTALL_DIR…"
+  step "Cloning Octopus to ${INSTALL_DIR}…"
   git clone --quiet "$REPO" "$INSTALL_DIR"
   ok "Cloned"
 fi
@@ -85,7 +85,7 @@ step "Installing Octopus and dependencies (this may take a minute)…"
 ok "Dependencies installed"
 
 # ── Config directory ──────────────────────────────────────────
-step "Setting up config directory at $CONFIG_DIR…"
+step "Setting up config directory at ${CONFIG_DIR}…"
 mkdir -p "$CONFIG_DIR/workflows" "$CONFIG_DIR/memory"
 if [ ! -f "$CONFIG_DIR/settings.yaml" ]; then
   cp "$INSTALL_DIR/config/settings.yaml" "$CONFIG_DIR/settings.yaml"
@@ -96,7 +96,7 @@ fi
 
 # ── Shell wrapper ─────────────────────────────────────────────
 WRAPPER="/usr/local/bin/octopus"
-step "Installing octopus command to $WRAPPER…"
+step "Installing octopus command to ${WRAPPER}…"
 if [ -w "/usr/local/bin" ] || sudo -n true 2>/dev/null; then
   cat > /tmp/octopus_wrapper << EOF
 #!/usr/bin/env bash
@@ -120,7 +120,7 @@ fi
 # ── .env template ─────────────────────────────────────────────
 ENV_FILE="$CONFIG_DIR/.env"
 if [ ! -f "$ENV_FILE" ]; then
-  step "Creating .env template at $ENV_FILE…"
+  step "Creating .env template at ${ENV_FILE}…"
   cat > "$ENV_FILE" << 'EOF'
 # Octopus environment variables
 # Uncomment and fill in the keys for the providers you want to use.
