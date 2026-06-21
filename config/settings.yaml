@@ -39,6 +39,14 @@ sandbox:
   db_path: ~/.config/octopus/sandbox.db
   auto_expire_hours: 24
 
+exec_sandbox:
+  driver: sandbox-exec             # sandbox-exec | docker | none
+  # docker options (only used when driver: docker)
+  docker_image: python:3.11-slim
+  docker_memory: 256m
+  docker_cpus: "0.5"
+  timeout_seconds: 30
+
 security:
   max_prompt_length: 8192
   injection_block_patterns:

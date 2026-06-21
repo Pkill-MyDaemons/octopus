@@ -51,6 +51,14 @@ class SandboxConfig(BaseModel):
     auto_expire_hours: int = 24
 
 
+class ExecSandboxConfig(BaseModel):
+    driver: str = "sandbox-exec"   # docker | sandbox-exec | none
+    docker_image: str = "python:3.11-slim"
+    docker_memory: str = "256m"
+    docker_cpus: str = "0.5"
+    timeout_seconds: int = 30
+
+
 class SecurityConfig(BaseModel):
     max_prompt_length: int = 8192
     injection_block_patterns: list[str] = Field(default_factory=lambda: [
@@ -72,6 +80,7 @@ class OctopusConfig(BaseModel):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
+    exec_sandbox: ExecSandboxConfig = Field(default_factory=ExecSandboxConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
 
 

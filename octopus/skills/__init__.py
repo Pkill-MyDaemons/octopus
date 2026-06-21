@@ -8,6 +8,7 @@ from octopus.skills.stage_draft import StageDraftSkill
 from octopus.skills.sync_task import SyncTaskSkill
 from octopus.skills.send_to_sandbox import SendToSandboxSkill
 from octopus.skills.draft_email_template import DraftEmailTemplateSkill
+from octopus.skills.run_shell import RunShellSkill
 
 _REGISTRY: dict[str, type] = {
     "fetch_memory_context": FetchContextSkill,
@@ -16,6 +17,7 @@ _REGISTRY: dict[str, type] = {
     "sync_task": SyncTaskSkill,
     "send_to_sandbox": SendToSandboxSkill,
     "draft_email_template": DraftEmailTemplateSkill,
+    "run_shell": RunShellSkill,
 }
 
 

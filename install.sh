@@ -93,6 +93,13 @@ if [ ! -f "$CONFIG_DIR/settings.yaml" ]; then
 else
   ok "Config already exists — skipping"
 fi
+for wf in "$INSTALL_DIR/workflows/"*.yaml; do
+  dest="$CONFIG_DIR/workflows/$(basename "$wf")"
+  if [ ! -f "$dest" ]; then
+    cp "$wf" "$dest"
+  fi
+done
+ok "Workflows available at $CONFIG_DIR/workflows/"
 
 # ── Shell wrapper ─────────────────────────────────────────────
 WRAPPER="/usr/local/bin/octopus"
