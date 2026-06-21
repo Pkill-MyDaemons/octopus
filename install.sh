@@ -5,7 +5,7 @@
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
 
-REPO="https://github.com/henrytunguz/octopus"
+REPO="https://github.com/pkill-mydaemons/octopus"
 INSTALL_DIR="$HOME/.octopus"
 CONFIG_DIR="$HOME/.config/octopus"
 CYAN='\033[0;36m'
