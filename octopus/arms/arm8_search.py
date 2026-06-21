@@ -24,9 +24,12 @@ class WebSearch:
         return text[:8000]
 
     def search(self, query: str, num_results: int = 5) -> list[dict]:
-        """Search via Brave Search API (requires SEARCH_API_KEY)."""
-        if not self._key:
-            return [{"error": "No SEARCH_API_KEY configured. Set it to enable web search."}]
+        """Search via Brave Search API, falling back to DuckDuckGo if no key is set."""
+        if self._key:
+            return self._brave_search(query, num_results)
+        return self._ddg_search(query, num_results)
+
+    def _brave_search(self, query: str, num_results: int) -> list[dict]:
         headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip",
@@ -44,3 +47,30 @@ class WebSearch:
             {"title": r.get("title"), "url": r.get("url"), "description": r.get("description")}
             for r in data.get("web", {}).get("results", [])
         ]
+
+    def _ddg_search(self, query: str, num_results: int) -> list[dict]:
+        """DuckDuckGo instant-answer API — no key required, best-effort results."""
+        resp = httpx.get(
+            "https://api.duckduckgo.com/",
+            params={"q": query, "format": "json", "no_redirect": "1", "no_html": "1"},
+            headers={"User-Agent": "Octopus/0.1"},
+            timeout=10,
+            follow_redirects=True,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        results = []
+        if data.get("AbstractURL"):
+            results.append({
+                "title": data.get("Heading", query),
+                "url": data["AbstractURL"],
+                "description": data.get("AbstractText", ""),
+            })
+        for topic in data.get("RelatedTopics", [])[:num_results - len(results)]:
+            if "FirstURL" in topic:
+                results.append({
+                    "title": topic.get("Text", "")[:80],
+                    "url": topic["FirstURL"],
+                    "description": topic.get("Text", ""),
+                })
+        return results or [{"title": "No results", "url": "", "description": f"DuckDuckGo returned no results for: {query}"}]

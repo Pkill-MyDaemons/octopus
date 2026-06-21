@@ -379,6 +379,59 @@ def launch_ui(port: int, no_browser: bool) -> None:
 
 
 @main.command()
+@click.argument("service", type=click.Choice(["gmail", "google-calendar"]))
+def auth(service: str) -> None:
+    """Authenticate with a Google service (gmail or google-calendar)."""
+    from pathlib import Path
+
+    _CREDS = Path.home() / ".config" / "octopus" / "gmail_credentials.json"
+    _SCOPES = {
+        "gmail": [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.modify",
+        ],
+        "google-calendar": [
+            "https://www.googleapis.com/auth/calendar",
+        ],
+    }
+    _TOKEN = {
+        "gmail": Path.home() / ".config" / "octopus" / "gmail_token.json",
+        "google-calendar": Path.home() / ".config" / "octopus" / "gcal_token.json",
+    }
+
+    if not _CREDS.exists():
+        console.print(f"[red]✗[/red] Credentials file not found at [bold]{_CREDS}[/bold]\n")
+        console.print("  To set up OAuth credentials:")
+        console.print("  1. Go to [cyan]https://console.cloud.google.com[/cyan]")
+        if service == "gmail":
+            console.print("  2. Create a project and enable the [bold]Gmail API[/bold]")
+        else:
+            console.print("  2. Create a project and enable the [bold]Google Calendar API[/bold]")
+        console.print("  3. APIs & Services → Credentials → Create Credentials → OAuth client ID")
+        console.print("  4. Choose [bold]Desktop app[/bold], download the JSON")
+        console.print(f"  5. Save it to [bold]{_CREDS}[/bold]")
+        console.print(f"\n  Then re-run: [cyan]octopus auth {service}[/cyan]")
+        sys.exit(1)
+
+    token_path = _TOKEN[service]
+    if token_path.exists():
+        console.print(f"[yellow]⚠[/yellow]  Existing token found — re-authorizing.")
+
+    try:
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        flow = InstalledAppFlow.from_client_secrets_file(str(_CREDS), _SCOPES[service])
+        console.print(f"[cyan]→[/cyan] Opening browser for [bold]{service}[/bold] authorization…")
+        creds = flow.run_local_server(port=0)
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        token_path.write_text(creds.to_json())
+        console.print(f"[green]✓[/green] Authorized. Token saved to {token_path}")
+    except Exception as exc:
+        console.print(f"[red]✗[/red] Authorization failed: {exc}")
+        sys.exit(1)
+
+
+@main.command()
 def config() -> None:
     """Show the current Octopus configuration."""
     from octopus.config import load_config, _config_paths
