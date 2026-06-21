@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 
@@ -86,6 +87,7 @@ def _config_paths() -> list[Path]:
 
 @lru_cache(maxsize=1)
 def load_config() -> OctopusConfig:
+    load_dotenv(Path.home() / ".config" / "octopus" / ".env")
     raw: dict[str, Any] = {}
     for path in _config_paths():
         if path.exists():
