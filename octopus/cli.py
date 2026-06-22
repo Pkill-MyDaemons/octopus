@@ -419,6 +419,11 @@ def auth(service: str) -> None:
         console.print(f"[yellow]⚠[/yellow]  Existing token found — re-authorizing.")
 
     try:
+        import os
+        import certifi
+        os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+
         from google_auth_oauthlib.flow import InstalledAppFlow
         flow = InstalledAppFlow.from_client_secrets_file(str(_CREDS), _SCOPES[service])
         console.print(f"[cyan]→[/cyan] Opening browser for [bold]{service}[/bold] authorization…")
